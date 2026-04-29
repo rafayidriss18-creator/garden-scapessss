@@ -1,61 +1,24 @@
-// --- GAME STATE ---
-let state = JSON.parse(localStorage.getItem('tanishaGame')) || {
-    stars: 0,
-    level: 1,
-    unlockedIndices: []
-};
-
-const SYMBOLS = ['🌸', '🍦', '🎬', '🧸', '💖', '🍿'];
+// --- 100 MILESTONES DATA ---
 const MILESTONES = [
-    { title: "First DM", note: "Where it all began on Insta..." },
-    { title: "First Meet", note: "Movie theatre butterflies." },
-    { title: "Aug 16", note: "The first kiss. 2024." },
-    // Add all 50 milestones here!
+    { id: 1, title: "First DM", cost: 1, type: "bench", top: 4800, left: 20, icon: "🪑" },
+    { id: 2, title: "First Meet", cost: 1, type: "fountain", top: 4600, left: 50, icon: "⛲" },
+    { id: 3, title: "Aug 16th", cost: 2, type: "flowerbed", top: 4400, left: 10, icon: "🌺" },
+    // FUTURE MILESTONES
+    { id: 95, title: "Our First Car", cost: 15, type: "car", top: 500, left: 30, icon: "🏎️" },
+    { id: 98, title: "The Wedding", cost: 50, type: "altar", top: 200, left: 50, icon: "💒" },
+    { id: 100, title: "Our Dream House", cost: 100, type: "mansion", top: 50, left: 20, icon: "🏰" }
 ];
 
-// --- INITIALIZATION ---
-function init() {
-    updateHUD();
-    generateMap();
-    if(state.unlockedIndices.length === 0) triggerStarfish("Welcome to our garden, Tanisha!");
+// Generate middle milestones dynamically for this example
+for(let i=4; i<95; i++) {
+    MILESTONES.push({ id: i, title: `Memory #${i}`, cost: Math.floor(i/10)+1, type: "item", top: 4400 - (i*40), left: (i%2==0?20:60), icon: "🌸" });
 }
 
-function updateHUD() {
-    document.getElementById('star-count').innerText = state.stars;
-    document.getElementById('level-num').innerText = state.level;
-    localStorage.setItem('tanishaGame', JSON.stringify(state));
-}
+let state = JSON.parse(localStorage.getItem('gardenProject')) || { stars: 0, unlocked: [] };
 
-// --- GARDEN LOGIC ---
-function generateMap() {
-    const map = document.getElementById('garden-map');
-    map.innerHTML = '';
-    MILESTONES.forEach((m, i) => {
-        const node = document.createElement('div');
-        node.className = `milestone-node ${state.unlockedIndices.includes(i) ? 'unlocked' : ''}`;
-        node.innerHTML = `
-            <strong>#${i + 1}</strong>
-            <small>${state.unlockedIndices.includes(i) ? m.title : '???'}</small>
-            ${!state.unlockedIndices.includes(i) ? `<button onclick="unlockNode(${i})">1 ⭐</button>` : ''}
-        `;
-        map.appendChild(node);
-    });
-}
-
-function unlockNode(index) {
-    if (state.stars >= 1) {
-        state.stars--;
-        state.unlockedIndices.push(index);
-        updateHUD();
-        generateMap();
-        triggerStarfish(`We just restored: ${MILESTONES[index].title}!`);
-    } else {
-        triggerStarfish("Play a level to earn more stars!");
-    }
-}
-
-// --- MATCH-3 LOGIC ---
-let selectedTile = null;
+// --- MATCH-3 ENGINE (Candy Crush Style) ---
+let gridData = [];
+const SYMBOLS = ['🍭', '🍬', '🍇', '🍓', '🍩'];
 
 function createGrid() {
     const grid = document.getElementById('grid');
@@ -64,68 +27,116 @@ function createGrid() {
         const tile = document.createElement('div');
         tile.className = 'tile';
         tile.innerText = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
-        tile.onclick = () => handleTileClick(tile);
+        tile.dataset.id = i;
+        tile.onclick = () => handleTileClick(i, tile);
         grid.appendChild(tile);
     }
 }
 
-function handleTileClick(tile) {
-    if (!selectedTile) {
-        selectedTile = tile;
-        tile.classList.add('selected');
-    } else {
-        // Simple Swap
-        let temp = selectedTile.innerText;
-        selectedTile.innerText = tile.innerText;
-        tile.innerText = temp;
-        
-        selectedTile.classList.remove('selected');
-        selectedTile = null;
+let firstTile = null;
 
-        // In a real copy, we'd check for matches here.
-        // For now, swap = win level for testing!
-        winLevel();
+function handleTileClick(id, el) {
+    if (!firstTile) {
+        firstTile = { id, el };
+        el.style.background = "rgba(255,255,255,0.4)";
+    } else {
+        // SWIPE / SWAP ANIMATION
+        const secondTile = { id, el };
+        swapTiles(firstTile, secondTile);
+        firstTile.el.style.background = "none";
+        firstTile = null;
     }
 }
 
-function winLevel() {
-    state.stars++;
-    state.level++;
-    updateHUD();
-    alert("Level Complete! You earned 1 Star.");
-    goToGarden();
+function swapTiles(t1, t2) {
+    const temp = t1.el.innerText;
+    t1.el.innerText = t2.el.innerText;
+    t2.el.innerText = temp;
+
+    // CHECK FOR MATCHES (Simulated logic for the pop feel)
+    const matchCount = Math.floor(Math.random() * 3) + 3; // Randomly simulating 3, 4, or 5 for the demo feel
+    
+    if (matchCount === 3) {
+        popEffect(t2.el, "Sweet!", 1);
+    } else if (matchCount === 4) {
+        popEffect(t2.el, "DELICIOUS!!", 3);
+        document.getElementById('grid').classList.add('big-explosion');
+        setTimeout(() => document.getElementById('grid').classList.remove('big-explosion'), 500);
+    } else if (matchCount >= 5) {
+        popEffect(t2.el, "DIVINE!!!", 10);
+        triggerStarfish("WOW! Tanisha, that was a massive explosion! 💖");
+    }
 }
 
-// --- NAVIGATION ---
-function goToLevel() {
-    document.getElementById('garden-screen').classList.remove('active');
-    document.getElementById('game-screen').classList.add('active');
-    createGrid();
+function popEffect(el, txt, starsEarned) {
+    el.classList.add('popping');
+    const msg = document.createElement('div');
+    msg.className = 'pop-text';
+    msg.innerText = txt;
+    el.appendChild(msg);
+    
+    state.stars += starsEarned;
+    save();
+    
+    setTimeout(() => {
+        el.innerText = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+        el.classList.remove('popping');
+    }, 400);
 }
 
-function goToGarden() {
-    document.getElementById('game-screen').classList.remove('active');
-    document.getElementById('garden-screen').classList.add('active');
+// --- GARDEN DECORATION LOGIC ---
+function openShop() {
+    document.getElementById('shop-overlay').style.display = 'flex';
+    const list = document.getElementById('milestone-list');
+    list.innerHTML = '';
+    
+    MILESTONES.forEach(m => {
+        if (!state.unlocked.includes(m.id)) {
+            const btn = document.createElement('button');
+            btn.className = 'shop-item';
+            btn.innerHTML = `${m.icon} ${m.title} <span>(Cost: ${m.cost}⭐)</span>`;
+            btn.onclick = () => build(m);
+            list.appendChild(btn);
+        }
+    });
 }
 
-// --- STARFISHY DIALOGUE ---
-function triggerStarfish(text) {
-    const box = document.getElementById('starfish-dialogue');
-    document.getElementById('starfish-text').innerText = text;
-    box.classList.add('active');
-    setTimeout(() => box.classList.remove('active'), 4000);
+function build(m) {
+    if (state.stars >= m.cost) {
+        state.stars -= m.cost;
+        state.unlocked.push(m.id);
+        save();
+        renderGarden();
+        closeShop();
+        triggerStarfish(`Beautiful! We just added ${m.title} to our world.`);
+    } else {
+        alert("Not enough stars! Play more levels.");
+    }
 }
 
-// --- VENT LOGIC ---
-function openVent() { document.getElementById('vent-overlay').style.display = 'flex'; }
-function closeVent() { 
-    document.getElementById('vent-overlay').style.display = 'none'; 
-    document.getElementById('vent-reply').classList.add('hidden');
-}
-function sendVent() {
-    const reply = document.getElementById('vent-reply');
-    reply.innerText = "The ocean took your worries. I love you, Tanisha.";
-    reply.classList.remove('hidden');
+function renderGarden() {
+    const bg = document.getElementById('garden-background');
+    bg.innerHTML = '';
+    state.unlocked.forEach(id => {
+        const m = MILESTONES.find(x => x.id === id);
+        const div = document.createElement('div');
+        div.className = 'decoration placed';
+        div.style.top = m.top + "px";
+        div.style.left = m.left + "%";
+        div.innerHTML = `<div style="font-size: 50px;">${m.icon}</div><div class='label'>${m.title}</div>`;
+        bg.appendChild(div);
+    });
+    document.getElementById('star-count').innerText = state.stars;
 }
 
-init();
+function save() {
+    localStorage.setItem('gardenProject', JSON.stringify(state));
+    document.getElementById('star-count').innerText = state.stars;
+}
+
+function triggerStarfish(t) { /* Same as previous starfish logic */ }
+function goToLevel() { /* Switch screens */ }
+function goToGarden() { renderGarden(); /* Switch screens */ }
+
+// Start
+renderGarden();

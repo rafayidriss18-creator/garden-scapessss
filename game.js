@@ -1,118 +1,131 @@
-// CONFIGURATION & COLORS
-const COLORS = {
-    pink: '#ffc0cb',
-    yellow: '#ffffe0',
-    red: '#8b0000',
-    white: '#ffffff'
+// --- GAME STATE ---
+let state = JSON.parse(localStorage.getItem('tanishaGame')) || {
+    stars: 0,
+    level: 1,
+    unlockedIndices: []
 };
 
-const SYMBOLS = ['🌸', '⭐', '🍭', '💖', '🎬', '🍦']; // Us-themed icons
+const SYMBOLS = ['🌸', '🍦', '🎬', '🧸', '💖', '🍿'];
+const MILESTONES = [
+    { title: "First DM", note: "Where it all began on Insta..." },
+    { title: "First Meet", note: "Movie theatre butterflies." },
+    { title: "Aug 16", note: "The first kiss. 2024." },
+    // Add all 50 milestones here!
+];
 
-class Game {
-    constructor() {
-        this.stars = parseInt(localStorage.getItem('stars')) || 0;
-        this.level = parseInt(localStorage.getItem('level')) || 1;
-        this.milestonesUnlocked = JSON.parse(localStorage.getItem('milestones')) || [];
-        this.board = [];
-        this.rows = 8;
-        this.cols = 8;
-        this.selectedTile = null;
+// --- INITIALIZATION ---
+function init() {
+    updateHUD();
+    generateMap();
+    if(state.unlockedIndices.length === 0) triggerStarfish("Welcome to our garden, Tanisha!");
+}
 
-        this.init();
-    }
+function updateHUD() {
+    document.getElementById('star-count').innerText = state.stars;
+    document.getElementById('level-num').innerText = state.level;
+    localStorage.setItem('tanishaGame', JSON.stringify(state));
+}
 
-    init() {
-        this.createBoard();
-        this.renderBoard();
-        this.updateUI();
-    }
+// --- GARDEN LOGIC ---
+function generateMap() {
+    const map = document.getElementById('garden-map');
+    map.innerHTML = '';
+    MILESTONES.forEach((m, i) => {
+        const node = document.createElement('div');
+        node.className = `milestone-node ${state.unlockedIndices.includes(i) ? 'unlocked' : ''}`;
+        node.innerHTML = `
+            <strong>#${i + 1}</strong>
+            <small>${state.unlockedIndices.includes(i) ? m.title : '???'}</small>
+            ${!state.unlockedIndices.includes(i) ? `<button onclick="unlockNode(${i})">1 ⭐</button>` : ''}
+        `;
+        map.appendChild(node);
+    });
+}
 
-    createBoard() {
-        for (let r = 0; r < this.rows; r++) {
-            this.board[r] = [];
-            for (let c = 0; c < this.cols; c++) {
-                this.board[r][c] = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
-            }
-        }
-    }
-
-    // Logic to check for matches
-    checkMatches() {
-        let hasMatch = false;
-        // Horizontal Check
-        for (let r = 0; r < this.rows; r++) {
-            for (let c = 0; c < this.cols - 2; c++) {
-                if (this.board[r][c] === this.board[r][c+1] && this.board[r][c] === this.board[r][c+2]) {
-                    hasMatch = true;
-                    // Logic to remove/replace matches goes here
-                }
-            }
-        }
-        return hasMatch;
-    }
-
-    swap(r1, c1, r2, c2) {
-        // Distance check (only adjacent)
-        const dR = Math.abs(r1 - r2);
-        const dC = Math.abs(c1 - c2);
-        if ((dR === 1 && dC === 0) || (dR === 0 && dC === 1)) {
-            let temp = this.board[r1][c1];
-            this.board[r1][c1] = this.board[r2][c2];
-            this.board[r2][c2] = temp;
-            
-            if (!this.checkMatches()) {
-                // If no match, swap back (just like Gardenscapes)
-                this.board[r2][c2] = this.board[r1][c1];
-                this.board[r1][c1] = temp;
-            } else {
-                this.winLevel();
-            }
-            this.renderBoard();
-        }
-    }
-
-    winLevel() {
-        this.stars++;
-        this.level++;
-        this.save();
-        alert("Level Complete! You earned a star.");
-        window.location.reload(); // Simple way to reset level
-    }
-
-    save() {
-        localStorage.setItem('stars', this.stars);
-        localStorage.setItem('level', this.level);
-        localStorage.setItem('milestones', JSON.stringify(this.milestonesUnlocked));
-    }
-
-    updateUI() {
-        document.getElementById('star-count').innerText = this.stars;
-    }
-
-    renderBoard() {
-        const container = document.getElementById('grid');
-        container.innerHTML = '';
-        for (let r = 0; r < this.rows; r++) {
-            for (let c = 0; c < this.cols; c++) {
-                const tile = document.createElement('div');
-                tile.className = 'tile';
-                tile.innerText = this.board[r][c];
-                tile.onclick = () => this.handleTileClick(r, c, tile);
-                container.appendChild(tile);
-            }
-        }
-    }
-
-    handleTileClick(r, c, el) {
-        if (!this.selectedTile) {
-            this.selectedTile = { r, c, el };
-            el.classList.add('selected');
-        } else {
-            this.swap(this.selectedTile.r, this.selectedTile.c, r, c);
-            this.selectedTile.el.classList.remove('selected');
-            this.selectedTile = null;
-        }
+function unlockNode(index) {
+    if (state.stars >= 1) {
+        state.stars--;
+        state.unlockedIndices.push(index);
+        updateHUD();
+        generateMap();
+        triggerStarfish(`We just restored: ${MILESTONES[index].title}!`);
+    } else {
+        triggerStarfish("Play a level to earn more stars!");
     }
 }
 
-const myGame = new Game();
+// --- MATCH-3 LOGIC ---
+let selectedTile = null;
+
+function createGrid() {
+    const grid = document.getElementById('grid');
+    grid.innerHTML = '';
+    for (let i = 0; i < 49; i++) {
+        const tile = document.createElement('div');
+        tile.className = 'tile';
+        tile.innerText = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+        tile.onclick = () => handleTileClick(tile);
+        grid.appendChild(tile);
+    }
+}
+
+function handleTileClick(tile) {
+    if (!selectedTile) {
+        selectedTile = tile;
+        tile.classList.add('selected');
+    } else {
+        // Simple Swap
+        let temp = selectedTile.innerText;
+        selectedTile.innerText = tile.innerText;
+        tile.innerText = temp;
+        
+        selectedTile.classList.remove('selected');
+        selectedTile = null;
+
+        // In a real copy, we'd check for matches here.
+        // For now, swap = win level for testing!
+        winLevel();
+    }
+}
+
+function winLevel() {
+    state.stars++;
+    state.level++;
+    updateHUD();
+    alert("Level Complete! You earned 1 Star.");
+    goToGarden();
+}
+
+// --- NAVIGATION ---
+function goToLevel() {
+    document.getElementById('garden-screen').classList.remove('active');
+    document.getElementById('game-screen').classList.add('active');
+    createGrid();
+}
+
+function goToGarden() {
+    document.getElementById('game-screen').classList.remove('active');
+    document.getElementById('garden-screen').classList.add('active');
+}
+
+// --- STARFISHY DIALOGUE ---
+function triggerStarfish(text) {
+    const box = document.getElementById('starfish-dialogue');
+    document.getElementById('starfish-text').innerText = text;
+    box.classList.add('active');
+    setTimeout(() => box.classList.remove('active'), 4000);
+}
+
+// --- VENT LOGIC ---
+function openVent() { document.getElementById('vent-overlay').style.display = 'flex'; }
+function closeVent() { 
+    document.getElementById('vent-overlay').style.display = 'none'; 
+    document.getElementById('vent-reply').classList.add('hidden');
+}
+function sendVent() {
+    const reply = document.getElementById('vent-reply');
+    reply.innerText = "The ocean took your worries. I love you, Tanisha.";
+    reply.classList.remove('hidden');
+}
+
+init();

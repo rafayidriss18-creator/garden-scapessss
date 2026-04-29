@@ -3,46 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tanisha's Sanctuary</title>
+    <title>Our Eternal Garden</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
 </head>
 <body>
 
+    <div id="loading-screen">Preparing Our World...</div>
+
     <div class="hud">
-        <div class="currency">⭐ <span id="star-count">0</span></div>
-        <div class="level-indicator">Level <span id="level-num">1</span></div>
+        <div class="stat-pill">⭐ <span id="star-count">0</span></div>
+        <div class="stat-pill">❤️ <span id="level-num">1</span></div>
     </div>
 
     <div id="garden-screen" class="screen active">
-        <div id="garden-map">
-            </div>
-        <button class="main-btn" onclick="goToLevel()">PLAY LEVEL</button>
-        <div id="vent-trigger" onclick="openVent()">🐚</div>
+        <div id="garden-viewport">
+            <div id="garden-background">
+                </div>
+        </div>
+        
+        <div class="ui-bottom">
+            <button class="garden-btn" onclick="openShop()">🏗️ Decorate</button>
+            <button class="play-btn" onclick="goToLevel()">PLAY</button>
+            <button class="vent-btn" onclick="openVent()">🐚</button>
+        </div>
     </div>
 
     <div id="game-screen" class="screen">
-        <div class="game-header">
-            <button class="back-btn" onclick="goToGarden()">⬅ Exit</button>
-            <h2 id="target-text">Match 3 to win!</h2>
+        <div class="game-ui">
+            <button onclick="goToGarden()">Back</button>
+            <div id="score-display">Pops: 0</div>
         </div>
-        <div id="grid-container">
+        <div id="grid-wrapper">
             <div id="grid"></div>
         </div>
     </div>
 
-    <div id="starfish-dialogue" class="dialogue-container">
-        <div class="starfish-avatar">⭐</div> <div class="bubble">
-            <p id="starfish-text">Hey Tanisha! Ready to build our garden?</p>
-        </div>
-    </div>
-
-    <div id="vent-overlay" class="overlay">
-        <div class="vent-card">
-            <button class="close-btn" onclick="closeVent()">×</button>
-            <h3>The Echo Shell</h3>
-            <textarea id="vent-input" placeholder="Tell me anything..."></textarea>
-            <button class="main-btn" onclick="sendVent()">Release</button>
-            <p id="vent-reply" class="hidden"></p>
+    <div id="shop-overlay" class="overlay">
+        <div class="shop-card">
+            <h2>Build Our Future</h2>
+            <div id="milestone-list"></div>
+            <button class="close-btn" onclick="closeShop()">Close</button>
         </div>
     </div>
 

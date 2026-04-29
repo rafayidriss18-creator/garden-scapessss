@@ -1,0 +1,86 @@
+:root {
+    --pink: #ffc0cb;
+    --yellow: #ffffe0;
+    --red: #8b0000;
+    --white: #ffffff;
+    --soft-green: #a8e6cf;
+}
+
+body, html {
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    font-family: 'Comic Sans MS', cursive, sans-serif;
+    overflow: hidden; background: var(--soft-green);
+}
+
+.screen { display: none; width: 100%; height: 100%; position: relative; }
+.screen.active { display: block; }
+
+/* HUD */
+.hud {
+    position: fixed; top: 10px; width: 100%; z-index: 100;
+    display: flex; justify-content: space-around;
+}
+.currency, .level-indicator {
+    background: white; padding: 8px 20px; border-radius: 20px;
+    border: 3px solid var(--pink); font-weight: bold; box-shadow: 0 4px 0 var(--pink);
+}
+
+/* GARDEN MAP */
+#garden-map {
+    width: 100%; height: 3000px; /* Long path for 50 milestones */
+    background: linear-gradient(var(--soft-green), #dcedc1);
+    padding-top: 100px; display: flex; flex-direction: column; align-items: center;
+}
+.milestone-node {
+    width: 140px; height: 140px; background: #bbb; margin: 40px;
+    border-radius: 30px; border: 5px solid white; display: flex;
+    flex-direction: column; align-items: center; justify-content: center;
+    position: relative; transition: 0.3s;
+}
+.milestone-node.unlocked { background: var(--pink); transform: scale(1.05); border-color: var(--red); }
+
+/* MATCH-3 GRID */
+#grid-container {
+    display: flex; justify-content: center; align-items: center; height: 70%;
+}
+#grid {
+    display: grid; grid-template-columns: repeat(7, 45px);
+    grid-template-rows: repeat(7, 45px); gap: 5px;
+    background: rgba(255,255,255,0.5); padding: 10px; border-radius: 10px;
+}
+.tile {
+    width: 45px; height: 45px; background: white; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; cursor: pointer; transition: transform 0.1s;
+}
+.tile.selected { border: 3px solid var(--red); transform: scale(1.1); }
+
+/* BUTTONS */
+.main-btn {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+    padding: 15px 40px; background: var(--red); color: white;
+    border-radius: 30px; border: none; font-size: 1.2rem; font-weight: bold;
+    box-shadow: 0 6px 0 #5e0000; cursor: pointer;
+}
+.main-btn:active { transform: translateX(-50%) translateY(4px); box-shadow: none; }
+
+/* DIALOGUE */
+.dialogue-container {
+    position: fixed; bottom: -200px; left: 20px; display: flex;
+    transition: 0.5s; z-index: 1000;
+}
+.dialogue-container.active { bottom: 20px; }
+.bubble {
+    background: white; border: 3px solid var(--pink); border-radius: 20px;
+    padding: 15px; margin-left: 10px; max-width: 200px; position: relative;
+}
+
+/* OVERLAYS */
+.overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8); z-index: 2000; display: none;
+    align-items: center; justify-content: center;
+}
+.vent-card { background: white; padding: 25px; border-radius: 30px; width: 80%; text-align: center; }
+textarea { width: 100%; height: 100px; margin: 15px 0; border-radius: 10px; border: 2px solid var(--pink); }
+.hidden { display: none; }
